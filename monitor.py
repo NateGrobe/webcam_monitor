@@ -1,4 +1,5 @@
 import winreg
+import time
 
 class WebcamRegHandler:
     # define registry paths
@@ -14,7 +15,6 @@ class WebcamRegHandler:
         self.c_active = [] # apps currently using webcam
 
     def findActiveApps(self):
-
         for reg_key, reg_path in zip(self._reg_keys, WebcamRegHandler.WEBCAM_REG_LIST):
             subkey_cnt, value_cnt, last_modified = winreg.QueryInfoKey(reg_key)
 
@@ -34,18 +34,35 @@ class WebcamRegHandler:
                     pass
 
     def getActiveApps(self):
+        self.findActiveApps()
         return self.active_apps, self.c_active
+
+def format_program_name(p_name):
+    return p_name.split("#")[-1].split(".")[0]
 
 # sample of how to use the class
 if __name__ == '__main__':
-    reg_handler = WebcamRegHandler()
-    reg_handler.findActiveApps()
-    active, c_active = reg_handler.getActiveApps()
+    active_logs = ""
+    active_tracker = {}
+    while True:
+        reg_handler = WebcamRegHandler()
+        active, c_active = reg_handler.getActiveApps()
 
-    print("Active Apps:")
-    for i in active:
-        print(i)
+        print("\n\nActive Apps:")
+        for i in active:
+            program_name = format_program_name(i)
+            if active_tracker[program_name]:
+                print(f"{program_name} stopped")
+                time_active = time.time() - active_tracker[program_name]
+                active_tracker.pop(program_name)
+            print(program_name)
 
-    print("\nCurrently Active App:")
-    for i in c_active:
-        print(i)
+        print("\nCurrently Active App:")
+        for i in c_active:
+            program_name = format_program_name(i)
+            if not active_tracker[program_name]:
+                print(f"{program_name} started")
+                active_tracker[program_name] = time.time()
+            print(program_name)
+
+        time.sleep(1)
