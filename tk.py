@@ -3,10 +3,7 @@ from monitor import WebcamRegHandler
 import time
 from datetime import datetime
 import chime
-
-def write_to_log(log):
-    with open("logs.txt", "a") as f:
-        f.write(log)
+from utils import write_to_log
 
 class App:
     def __init__(self, window):
@@ -30,7 +27,6 @@ class App:
 
     def stop_monitor(self):
         self.start = False
-
 
     def monitor(self):
         if self.start:
@@ -56,9 +52,6 @@ class App:
                 print(p)
             
             self.window.after(1000, self.monitor)
-
-
-
 
 if __name__ == '__main__':
     App(Tk())
