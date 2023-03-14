@@ -44,41 +44,6 @@ class WebcamRegHandler:
         self.findActiveApps()
         return self.active_apps, self.c_active
 
-
-
-
-# def track_webcam():
-#     active_tracker = {}
-
-#     while True:
-#         reg_handler = WebcamRegHandler()
-#         active, c_active = reg_handler.getActiveApps()
-
-#         print("\n\nActive Apps:")
-#         for i in active:
-#             program_name = format_program_name(i)
-#             if program_name in active_tracker.keys():
-#                 time_active = time.time() - active_tracker[program_name]
-#                 log_str = f"{program_name} stopped after {time_active:.2f}s\n" 
-#                 write_to_log(log_str)
-#                 print(log_str)
-#                 active_tracker.pop(program_name)
-#             print(program_name)
-
-#         print("\nCurrently Active App:")
-#         for i in c_active:
-#             program_name = format_program_name(i)
-#             if program_name not in active_tracker.keys():
-#                 log_str = f"{program_name} started at {datetime.now()}\n"
-#                 write_to_log(log_str)
-#                 print(log_str)
-#                 active_tracker[program_name] = time.time()
-#             print(program_name)
-
-#         time.sleep(1)
-
-
-# sample of how to use the class
 if __name__ == '__main__':
     active_tracker = {}
 
