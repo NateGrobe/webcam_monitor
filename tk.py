@@ -100,6 +100,7 @@ class App:
                 self.active_list.see(END)
                 
 
+            print("\nCurrently Active App:")
             for p in c_active:
                 if p not in self.active_tracker.keys():
                     log_str = f"{p} started at {datetime.now()}\n"
