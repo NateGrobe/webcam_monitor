@@ -44,7 +44,7 @@ class App:
                     log_str = f"{p} stopped after {time_active:.2f}s\n" 
                     write_to_log(log_str)
                     self.active_tracker.pop(p)
-                # print(p)
+                print(p)
 
             print("\nCurrently Active App:")
             for p in c_active:
@@ -53,7 +53,7 @@ class App:
                     write_to_log(log_str)
                     self.active_tracker[p] = time.time()
                     chime.success()
-                # print(p)
+                print(p)
             
             self.window.after(1000, self.monitor)
 
