@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 import chime
 from utils import write_to_log
+from utils import write_to_stats
 import customtkinter
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -15,6 +16,8 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.start = False
+        self.logging_cb_state = True
+        self.sound_cb_state = True
 
         # configure window
         self.title("Webcam Monitor")
@@ -37,10 +40,15 @@ class App(customtkinter.CTk):
         self.startbtn.grid(row=1, column=0, padx=20, pady=10)
 
         # Logging
-        self.logging_cb_state = tkinter.BooleanVar(value=True)
-        self.logging_cb = customtkinter.CTkCheckBox(self.sidebar_frame, text="Logging", variable=self.logging_cb_state, onvalue=True, offvalue=False)
+        self.logging_cb_var = IntVar()
+        self.logging_cb = customtkinter.CTkCheckBox(self.sidebar_frame, text="Logging", variable=self.logging_cb_var, onvalue=1, offvalue=0, command=lambda: self.toggle('logging'))
         self.logging_cb.grid(row=1, column=0, pady=(100, 0), padx=20, sticky="n")
         self.logging_cb.select()
+
+        self.sound_cb_var = IntVar()
+        self.sound_cb = customtkinter.CTkCheckBox(self.sidebar_frame, text="Sound", variable=self.sound_cb_var, onvalue=1, command=lambda: self.toggle('sound'))
+        self.sound_cb.grid(row=2, column=0, pady=(20, 0), padx=20, sticky="n")
+        self.sound_cb.select()
        
         # LIGHT AND DARK MODE ETC
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
@@ -87,6 +95,7 @@ class App(customtkinter.CTk):
         # set default values
         self.appearance_mode_optionemenu.set("Dark")
         self.active_tracker = {}
+        self.access_counts = {}
         
         self.mainloop()
 
@@ -94,12 +103,13 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
 
-
-    def sidebar_button_event(self):
-        print("sidebar_button click")
+    def toggle(self, cb):
+        if cb == 'logging':
+            self.logging_cb_state = bool(self.logging_cb_var.get())
+        elif cb == 'sound':
+            self.sound_cb_state = bool(self.sound_cb_var.get())
 
     def handle_start_stop(self):
-
         if not self.start:
             self.start = True
             self.startbtn.configure(text="Stop")
@@ -128,7 +138,7 @@ class App(customtkinter.CTk):
                     time_active = time.time() - self.active_tracker[p]
                     log_str = f"{p} stopped after {time_active:.2f}s\n" 
                     write_to_log(log_str)
-                    if self.logging_cb_state.get():
+                    if bool(self.logging_cb_var.get()):
                         self.log_list.insert(END, f"\n{log_str}")
                     self.active_tracker.pop(p)
                     
@@ -142,10 +152,17 @@ class App(customtkinter.CTk):
                 if p not in self.active_tracker.keys():
                     log_str = f"{p} started at {datetime.now()}\n"
                     write_to_log(log_str)
-                    if self.logging_cb_state.get():
+                    if p not in self.access_counts.keys():
+                        self.access_counts.update({p : 0})
+                    self.access_counts[p] = self.access_counts[p] + 1
+                    stats = f"{p} accessed the webcam {self.access_counts[p]} times\n"
+                    write_to_stats(stats)  
+                    if bool(self.logging_cb_var.get()):
                         self.log_list.insert(END, f"\n{log_str}")
+                        self.log_list.insert(END, f"{p} has accessed the webcam {self.access_counts[p]} times")
                     self.active_tracker[p] = time.time()
-                    chime.success()
+                    if bool(self.sound_cb_var.get()):
+                        chime.success()
                     
                 print(p)
                 self.current_list.insert(END, f"\n{c_active}")
