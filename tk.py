@@ -1,3 +1,4 @@
+import tkinter
 from tkinter import *
 from monitor import WebcamRegHandler
 import time
@@ -36,8 +37,10 @@ class App(customtkinter.CTk):
         self.startbtn.grid(row=1, column=0, padx=20, pady=10)
 
         # Logging
-        self.logging_cb = customtkinter.CTkCheckBox(self.sidebar_frame)
+        self.logging_cb_state = tkinter.BooleanVar(value=True)
+        self.logging_cb = customtkinter.CTkCheckBox(self.sidebar_frame, text="Logging", variable=self.logging_cb_state, onvalue=True, offvalue=False )
         self.logging_cb.grid(row=1, column=0, pady=(100, 0), padx=20, sticky="n")
+        self.logging_cb.select()
        
         # LIGHT AND DARK MODE ETC
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
@@ -80,20 +83,12 @@ class App(customtkinter.CTk):
         self.current_list = customtkinter.CTkTextbox(self.current_list_frame, width=400, height=100, cursor=None, yscrollcommand=True, corner_radius=10)
         self.current_list.grid(row=1, column=1, padx=(10, 10), pady=(10, 10), sticky="nsew")
 
-
+        
         # set default values
         self.appearance_mode_optionemenu.set("Dark")
-        self.logging_cb_state = True
-        self.logging_cb.toggle()
         self.active_tracker = {}
         
         self.mainloop()
-
-        
-
-    def open_input_dialog_event(self):
-        dialog = customtkinter.CTkInputDialog(text="Type in a number:", title="CTkInputDialog")
-        print("CTkInputDialog:", dialog.get_input())
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -121,10 +116,6 @@ class App(customtkinter.CTk):
     def stop_monitor(self):
         self.start = False
 
-
-    def toggle_logging(self):
-        self.logging_cb_state = not self.logging_cb_state
-        
     def monitor(self):
         if self.start:
             reg_handler = WebcamRegHandler()
