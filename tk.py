@@ -38,7 +38,7 @@ class App(customtkinter.CTk):
 
         # Logging
         self.logging_cb_state = tkinter.BooleanVar(value=True)
-        self.logging_cb = customtkinter.CTkCheckBox(self.sidebar_frame, text="Logging", variable=self.logging_cb_state, onvalue=True, offvalue=False )
+        self.logging_cb = customtkinter.CTkCheckBox(self.sidebar_frame, text="Logging", variable=self.logging_cb_state, onvalue=True, offvalue=False)
         self.logging_cb.grid(row=1, column=0, pady=(100, 0), padx=20, sticky="n")
         self.logging_cb.select()
        
@@ -128,7 +128,7 @@ class App(customtkinter.CTk):
                     time_active = time.time() - self.active_tracker[p]
                     log_str = f"{p} stopped after {time_active:.2f}s\n" 
                     write_to_log(log_str)
-                    if self.logging_cb_state:
+                    if self.logging_cb_state.get():
                         self.log_list.insert(END, f"\n{log_str}")
                     self.active_tracker.pop(p)
                     
@@ -142,7 +142,7 @@ class App(customtkinter.CTk):
                 if p not in self.active_tracker.keys():
                     log_str = f"{p} started at {datetime.now()}\n"
                     write_to_log(log_str)
-                    if self.logging_cb_state:
+                    if self.logging_cb_state.get():
                         self.log_list.insert(END, f"\n{log_str}")
                     self.active_tracker[p] = time.time()
                     chime.success()
