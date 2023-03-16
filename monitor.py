@@ -32,11 +32,11 @@ class WebcamRegHandler:
 
                 try:
                     ts, _ = winreg.QueryValueEx(subkey, "LastUsedTimeStop")
-
+                    formatted_name = self.format_program_name(subkey_name)
                     if ts == 0:
-                        self.c_active.append(self.format_program_name(subkey_name))
+                        self.c_active.append(formatted_name)
                     else:
-                        self.active_apps.append(self.format_program_name(subkey_name))
+                        self.active_apps.append(formatted_name)
                 except:
                     pass
 
