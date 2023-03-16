@@ -117,6 +117,7 @@ class App(customtkinter.CTk):
         else:
             self.start = True
             self.startbtn.configure(text="Start")
+
             self.stop_monitor()
 
     def start_monitor(self):
@@ -126,6 +127,10 @@ class App(customtkinter.CTk):
     def stop_monitor(self):
         self.start = False
 
+
+    def toggle_logging(self):
+        self.logging_cb_state = not self.logging_cb_state
+        
     def monitor(self):
         if self.start:
             reg_handler = WebcamRegHandler()
@@ -139,6 +144,7 @@ class App(customtkinter.CTk):
                     log_str = f"{p} stopped after {time_active:.2f}s\n" 
                     write_to_log(log_str)
                     if bool(self.logging_cb_var.get()):
+
                         self.log_list.insert(END, f"\n{log_str}")
                     self.active_tracker.pop(p)
                     
