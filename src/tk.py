@@ -12,6 +12,15 @@ import cv2
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+class PopUp(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.geometry("400x300")
+
+        self.label = customtkinter.CTkLabel(self, text="LABEL")
+        self.label.pack(padx=20, pady=20)
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -39,6 +48,9 @@ class App(customtkinter.CTk):
         # START BUTTON
         self.startbtn = customtkinter.CTkButton(self.sidebar_frame, text="Start Monitor", command=self.handle_start_stop)
         self.startbtn.grid(row=1, column=0, padx=20, pady=10)
+
+        self.check_unknownbtn = customtkinter.CTkButton(self.sidebar_frame, text="Scan for Hidden Programs", command=self.scan_cam)
+        self.check_unknownbtn.grid(row=3, column=0, padx=20, pady=10)
 
         # Logging
         self.logging_cb_var = IntVar()
@@ -98,8 +110,8 @@ class App(customtkinter.CTk):
         self.active_tracker = {}
         self.access_counts = {}
 
-        self.cap = cv2.VideoCapture(0)
-        
+        self.toplevel_window = None
+
         self.mainloop()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
@@ -133,6 +145,28 @@ class App(customtkinter.CTk):
 
     def toggle_logging(self):
         self.logging_cb_state = not self.logging_cb_state
+
+    def scan_cam(self):
+        # _, c_active = WebcamRegHandler().getActiveApps()
+
+        if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+            self.toplevel_window = PopUp(self)  # create window if its None or destroyed
+        else:
+            self.toplevel_window.focus()  # if window exists focus it
+
+        # if not len(c_active):
+        #     cap = cv2.VideoCapture(0)
+        #     ret, _ = cap.read()
+        #     cap.release()
+
+        #     if not ret:
+        #         print("Unknown application found")
+        #     else:
+        #         print("No unknown applications found")
+
+        # else:
+        #     print("No unknown applications found")
+
         
     def monitor(self):
         if self.start:
@@ -140,7 +174,7 @@ class App(customtkinter.CTk):
             active, c_active = reg_handler.getActiveApps()
             self.active_list.delete('1.0',END)
             self.current_list.delete('1.0',END)
-            print("\n\nActive Apps:")
+            # print("\n\nActive Apps:")
             for p in active:
                 if p in self.active_tracker.keys():
                     time_active = time.time() - self.active_tracker[p]
@@ -151,23 +185,17 @@ class App(customtkinter.CTk):
                         self.log_list.insert(END, f"\n{log_str}")
                     self.active_tracker.pop(p)
                     
-                print(p)
+                # print(p)
                 self.active_list.insert(END,f"\n{p}")
                 self.active_list.see(END)
 
-            
-            if not len(c_active):
-                ret, img = self.cap.read()
-                print("RET", ret)
-                if ret:
-                    c_active.append("Unknown Application")
-                
-
-            print("\nCurrently Active App:")
+            # print("\nCurrently Active App:")
             for p in c_active:
                 if p not in self.active_tracker.keys():
+                    # build log string
                     log_str = f"{p} started at {datetime.now()}\n"
                     write_to_log(log_str)
+
                     if p not in self.access_counts.keys():
                         self.access_counts.update({p : 0})
                     self.access_counts[p] = self.access_counts[p] + 1
@@ -180,13 +208,10 @@ class App(customtkinter.CTk):
                     if bool(self.sound_cb_var.get()):
                         chime.success()
                     
-                print(p)
+                # print(p)
                 self.current_list.insert(END, f"\n{c_active[0]}")
                 self.current_list.see(END)  
 
-                
-                
-            
             self.after(1000, self.monitor)
 
 

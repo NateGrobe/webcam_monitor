@@ -17,9 +17,13 @@ class WebcamRegHandler:
     def format_program_name(self, p_name):
         if "C:" in p_name:
             return p_name.split("#")[-1].split(".")[0]
+        
+        if "Python" in p_name:
+            return p_name
         return p_name.split(".")[-1].split("_")[0]
 
     def findActiveApps(self):
+        self.active_tmp = []
         self.active_apps = [] # apps with access to webcam
         self.c_active = [] # apps currently using webcam
         for reg_key, reg_path in zip(self._reg_keys, WebcamRegHandler.WEBCAM_REG_LIST):
@@ -36,9 +40,22 @@ class WebcamRegHandler:
                     if ts == 0:
                         self.c_active.append(formatted_name)
                     else:
-                        self.active_apps.append(formatted_name)
+                        self.active_tmp.append(formatted_name)
                 except:
                     pass
+
+        app_count = {}
+        for a in self.active_tmp:
+            if a not in app_count.keys():
+                app_count[a] = 1
+            else:
+                app_count[a] += 1
+
+        for k in app_count.keys():
+            if app_count[k] > 1:
+                self.active_apps.append(f"{k} ({app_count[k]})")
+            else:
+                self.active_apps.append(k)
 
     def getActiveApps(self):
         self.findActiveApps()
