@@ -4,21 +4,29 @@ from monitor import WebcamRegHandler
 import time
 from datetime import datetime
 import chime
-from utils import write_to_log
-from utils import write_to_stats
+from utils import Logging
 import customtkinter
 import cv2
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
-class PopUp(customtkinter.CTkToplevel):
+class FoundPopUp(customtkinter.CTkToplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.geometry("400x300")
+        self.geometry("300x100")
 
-        self.label = customtkinter.CTkLabel(self, text="LABEL")
+        self.label = customtkinter.CTkLabel(self, text="Unknown application found!")
+        self.label.pack(padx=20, pady=20)
+
+class NotFoundPopUp(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.geometry("300x100")
+
+        self.label = customtkinter.CTkLabel(self, text="No unknown applications found!")
         self.label.pack(padx=20, pady=20)
 
 class App(customtkinter.CTk):
@@ -147,25 +155,28 @@ class App(customtkinter.CTk):
         self.logging_cb_state = not self.logging_cb_state
 
     def scan_cam(self):
-        # _, c_active = WebcamRegHandler().getActiveApps()
+        _, c_active = WebcamRegHandler().getActiveApps()
 
-        if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
-            self.toplevel_window = PopUp(self)  # create window if its None or destroyed
+        if not len(c_active):
+            cap = cv2.VideoCapture(0)
+            ret, _ = cap.read()
+            cap.release()
+
+            if not ret:
+                if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+                    self.toplevel_window = FoundPopUp(self)  # create window if its None or destroyed
+                else:
+                    self.toplevel_window.focus()  # if window exists focus it
+            else:
+                if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+                    self.toplevel_window = NotFoundPopUp(self)  # create window if its None or destroyed
+                else:
+                    self.toplevel_window.focus()  # if window exists focus it
         else:
-            self.toplevel_window.focus()  # if window exists focus it
-
-        # if not len(c_active):
-        #     cap = cv2.VideoCapture(0)
-        #     ret, _ = cap.read()
-        #     cap.release()
-
-        #     if not ret:
-        #         print("Unknown application found")
-        #     else:
-        #         print("No unknown applications found")
-
-        # else:
-        #     print("No unknown applications found")
+            if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+                self.toplevel_window = NotFoundPopUp(self)  # create window if its None or destroyed
+            else:
+                self.toplevel_window.focus()  # if window exists focus it
 
         
     def monitor(self):
@@ -179,7 +190,7 @@ class App(customtkinter.CTk):
                 if p in self.active_tracker.keys():
                     time_active = time.time() - self.active_tracker[p]
                     log_str = f"{p} stopped after {time_active:.2f}s\n" 
-                    write_to_log(log_str)
+                    Logging.write_to_log(log_str)
                     if bool(self.logging_cb_var.get()):
 
                         self.log_list.insert(END, f"\n{log_str}")
@@ -194,13 +205,13 @@ class App(customtkinter.CTk):
                 if p not in self.active_tracker.keys():
                     # build log string
                     log_str = f"{p} started at {datetime.now()}\n"
-                    write_to_log(log_str)
+                    Logging.write_to_log(log_str)
 
                     if p not in self.access_counts.keys():
                         self.access_counts.update({p : 0})
                     self.access_counts[p] = self.access_counts[p] + 1
                     stats = f"{p} accessed the webcam {self.access_counts[p]} times\n"
-                    write_to_stats(stats)  
+                    Logging.write_to_stats(stats)  
                     if bool(self.logging_cb_var.get()):
                         self.log_list.insert(END, f"\n{log_str}")
                         self.log_list.insert(END, f"{p} has accessed the webcam {self.access_counts[p]} times")
@@ -216,6 +227,5 @@ class App(customtkinter.CTk):
 
 
 if __name__ == '__main__':
-    # App(Tk())
     app = App()
     app.mainloop()
