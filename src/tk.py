@@ -57,7 +57,7 @@ class App(customtkinter.CTk):
         self.startbtn = customtkinter.CTkButton(self.sidebar_frame, text="Start Monitor", command=self.handle_start_stop)
         self.startbtn.grid(row=1, column=0, padx=20, pady=10)
 
-        self.check_unknownbtn = customtkinter.CTkButton(self.sidebar_frame, text="Scan for Hidden Programs", command=self.scan_cam)
+        self.check_unknownbtn = customtkinter.CTkButton(self.sidebar_frame, text="Scan for\nHidden Programs", command=self.scan_cam)
         self.check_unknownbtn.grid(row=3, column=0, padx=20, pady=10)
 
         # Logging
@@ -79,7 +79,7 @@ class App(customtkinter.CTk):
         self.appearance_mode_optionemenu.grid(row=6, column=0, padx=20, pady=(10, 10))
 
 
-# Widgets
+        # Widgets
         # Apps with access
         self.active_list_frame = customtkinter.CTkFrame(self, corner_radius=10, width=500, height=250)
         self.active_list_frame.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
@@ -89,6 +89,7 @@ class App(customtkinter.CTk):
        
         self.active_list = customtkinter.CTkTextbox(self.active_list_frame, width=400, height=400, cursor=None, yscrollcommand=True, corner_radius=10)
         self.active_list.grid(row=2, column=1, padx=(10, 10), pady=(10, 10), sticky="nsew")
+        self.active_list.configure(state='disabled')
         
 
         # Output log
@@ -100,7 +101,7 @@ class App(customtkinter.CTk):
        
         self.log_list = customtkinter.CTkTextbox(self.log_frame, width=400, height=400, cursor=None, yscrollcommand=True, corner_radius=10)
         self.log_list.grid(row=2, column=1, padx=(10, 10), pady=(10, 10), sticky="nsew")
-
+        self.log_list.configure(state='disabled')
 
         # Currently Active
         self.current_list_frame = customtkinter.CTkFrame(self, corner_radius=10, width=500, height=100)
@@ -111,6 +112,7 @@ class App(customtkinter.CTk):
 
         self.current_list = customtkinter.CTkTextbox(self.current_list_frame, width=400, height=100, cursor=None, yscrollcommand=True, corner_radius=10)
         self.current_list.grid(row=1, column=1, padx=(10, 10), pady=(10, 10), sticky="nsew")
+        self.current_list.configure(state='disabled')
 
         
         # set default values
@@ -120,10 +122,24 @@ class App(customtkinter.CTk):
 
         self.toplevel_window = None
 
+        self.populate_log()
+
         self.mainloop()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
+
+    def populate_log(self):
+        try:
+            with open("logs.txt") as f:
+                self.update_log_list(f.read())
+        except:
+            pass
+
+    def update_log_list(self, str):
+        self.log_list.configure(state='normal')
+        self.log_list.insert(END, f"\n{str}")
+        self.log_list.configure(state='disabled')
 
 
     def toggle(self, cb):
@@ -183,24 +199,31 @@ class App(customtkinter.CTk):
         if self.start:
             reg_handler = WebcamRegHandler()
             active, c_active = reg_handler.getActiveApps()
+
+            # clear the active and inactive app lists for new info
+            self.active_list.configure(state='normal')
+            self.current_list.configure(state='normal')
             self.active_list.delete('1.0',END)
             self.current_list.delete('1.0',END)
-            # print("\n\nActive Apps:")
+            self.active_list.configure(state='disabled')
+            self.current_list.configure(state='disabled')
+
             for p in active:
                 if p in self.active_tracker.keys():
                     time_active = time.time() - self.active_tracker[p]
                     log_str = f"{p} stopped after {time_active:.2f}s\n" 
                     Logging.write_to_log(log_str)
                     if bool(self.logging_cb_var.get()):
+                        self.update_log_list(log_str)
 
-                        self.log_list.insert(END, f"\n{log_str}")
                     self.active_tracker.pop(p)
                     
-                # print(p)
+                # update active list
+                self.active_list.configure(state='normal')
                 self.active_list.insert(END,f"\n{p}")
                 self.active_list.see(END)
+                self.active_list.configure(state='disabled')
 
-            # print("\nCurrently Active App:")
             for p in c_active:
                 if p not in self.active_tracker.keys():
                     # build log string
@@ -209,19 +232,23 @@ class App(customtkinter.CTk):
 
                     if p not in self.access_counts.keys():
                         self.access_counts.update({p : 0})
+
                     self.access_counts[p] = self.access_counts[p] + 1
                     stats = f"{p} accessed the webcam {self.access_counts[p]} times\n"
                     Logging.write_to_stats(stats)  
+
                     if bool(self.logging_cb_var.get()):
-                        self.log_list.insert(END, f"\n{log_str}")
-                        self.log_list.insert(END, f"{p} has accessed the webcam {self.access_counts[p]} times")
+                        self.update_log_list(f"\n{log_str}")
+                        self.update_log_list(f"{p} has accessed the webcam {self.access_counts[p]} times")
+
                     self.active_tracker[p] = time.time()
                     if bool(self.sound_cb_var.get()):
                         chime.success()
                     
-                # print(p)
+                self.current_list.configure(state='normal')
                 self.current_list.insert(END, f"\n{c_active[0]}")
                 self.current_list.see(END)  
+                self.current_list.configure(state='disabled')
 
             self.after(1000, self.monitor)
 
