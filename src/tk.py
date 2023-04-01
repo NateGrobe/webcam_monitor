@@ -8,9 +8,11 @@ from utils import Logging
 import customtkinter
 import cv2
 
+# some visual config stuff
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+# popup class logic
 class FoundPopUp(customtkinter.CTkToplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,6 +22,7 @@ class FoundPopUp(customtkinter.CTkToplevel):
         self.label = customtkinter.CTkLabel(self, text="Unknown application found!")
         self.label.pack(padx=20, pady=20)
 
+# popup class logic
 class NotFoundPopUp(customtkinter.CTkToplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,6 +33,7 @@ class NotFoundPopUp(customtkinter.CTkToplevel):
         self.label.pack(padx=20, pady=20)
 
 class App(customtkinter.CTk):
+    # initialize UI layout
     def __init__(self):
         super().__init__()
 
@@ -126,9 +130,11 @@ class App(customtkinter.CTk):
 
         self.mainloop()
 
+    # updates appearance on change
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
+    # writes to log file
     def populate_log(self):
         try:
             with open("logs.txt") as f:
@@ -136,18 +142,21 @@ class App(customtkinter.CTk):
         except:
             pass
 
+    # updates log field in UI
     def update_log_list(self, str):
         self.log_list.configure(state='normal')
         self.log_list.insert(END, f"\n{str}")
         self.log_list.configure(state='disabled')
 
 
+    # toggles alert options
     def toggle(self, cb):
         if cb == 'logging':
             self.logging_cb_state = bool(self.logging_cb_var.get())
         elif cb == 'sound':
             self.sound_cb_state = bool(self.sound_cb_var.get())
 
+    # event handler for start and stop button
     def handle_start_stop(self):
         if not self.start:
             self.start = True
@@ -159,17 +168,21 @@ class App(customtkinter.CTk):
 
             self.stop_monitor()
 
+    # starts the main loop of the monitor
     def start_monitor(self):
         self.start = True
         self.monitor()
 
+    # stops the main loop
     def stop_monitor(self):
         self.start = False
 
 
+    # toggles loggin on and off
     def toggle_logging(self):
         self.logging_cb_state = not self.logging_cb_state
 
+    # checks if camera is being used as redundancy
     def scan_cam(self):
         _, c_active = WebcamRegHandler().getActiveApps()
 
@@ -195,8 +208,10 @@ class App(customtkinter.CTk):
                 self.toplevel_window.focus()  # if window exists focus it
 
         
+    # main monitor functoin
     def monitor(self):
         if self.start:
+            # query registry
             reg_handler = WebcamRegHandler()
             active, c_active = reg_handler.getActiveApps()
 
@@ -208,6 +223,7 @@ class App(customtkinter.CTk):
             self.active_list.configure(state='disabled')
             self.current_list.configure(state='disabled')
 
+            # inactive application logic
             for p in active:
                 if p in self.active_tracker.keys():
                     time_active = time.time() - self.active_tracker[p]
@@ -224,6 +240,7 @@ class App(customtkinter.CTk):
                 self.active_list.see(END)
                 self.active_list.configure(state='disabled')
 
+            # active app logic
             for p in c_active:
                 if p not in self.active_tracker.keys():
                     # build log string
@@ -237,11 +254,13 @@ class App(customtkinter.CTk):
                     stats = f"{p} accessed the webcam {self.access_counts[p]} times\n"
                     Logging.write_to_stats(stats)  
 
+                    # checks for logging toggle to be active
                     if bool(self.logging_cb_var.get()):
                         self.update_log_list(f"\n{log_str}")
                         self.update_log_list(f"{p} has accessed the webcam {self.access_counts[p]} times")
 
                     self.active_tracker[p] = time.time()
+                    # checks for sound alert toggle to be active
                     if bool(self.sound_cb_var.get()):
                         chime.success()
                     
@@ -250,6 +269,7 @@ class App(customtkinter.CTk):
                 self.current_list.see(END)  
                 self.current_list.configure(state='disabled')
 
+            # executes once per second
             self.after(1000, self.monitor)
 
 

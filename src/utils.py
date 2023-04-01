@@ -1,3 +1,4 @@
+# writes to the logging and stats files
 class Logging:
     def write_to_log(log):
         with open("logs.txt", "a") as f:

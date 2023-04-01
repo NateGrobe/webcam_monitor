@@ -14,6 +14,7 @@ class WebcamRegHandler:
     def __init__(self):
         self._reg_keys = [winreg.OpenKey(WebcamRegHandler.REG_KEY, reg) for reg in WebcamRegHandler.WEBCAM_REG_LIST]
 
+    # formats the programs names into a more readable form
     def format_program_name(self, p_name):
         if "C:" in p_name:
             return p_name.split("#")[-1].split(".")[0]
@@ -26,24 +27,31 @@ class WebcamRegHandler:
         self.active_tmp = []
         self.active_apps = [] # apps with access to webcam
         self.c_active = [] # apps currently using webcam
+
+        # iterate through all the keys
         for reg_key, reg_path in zip(self._reg_keys, WebcamRegHandler.WEBCAM_REG_LIST):
             subkey_cnt, value_cnt, last_modified = winreg.QueryInfoKey(reg_key)
 
             for idx in range(subkey_cnt):
+                # get the name of the program
                 subkey_name = winreg.EnumKey(reg_key, idx)
                 subkey_full_name = f"{reg_path}\\{subkey_name}"
                 subkey = winreg.OpenKey(WebcamRegHandler.REG_KEY, subkey_full_name)
 
+                # check if the program has the LastUsedTimeStop field (used to determine if a program is running)
+                # and sort by active or inactive
                 try:
                     ts, _ = winreg.QueryValueEx(subkey, "LastUsedTimeStop")
                     formatted_name = self.format_program_name(subkey_name)
                     if ts == 0:
-                        self.c_active.append(formatted_name)
+                        self.c_active.append(formatted_name) # active programs
                     else:
-                        self.active_tmp.append(formatted_name)
+                        self.active_tmp.append(formatted_name) # inactive programs
                 except:
                     pass
 
+        # some apps have multiple instances running (usually background threads)
+        # this logic shows them only once and computes how many threads there are
         app_count = {}
         for a in self.active_tmp:
             if a not in app_count.keys():
@@ -57,6 +65,7 @@ class WebcamRegHandler:
             else:
                 self.active_apps.append(k)
 
+    # execute this to query the registry
     def getActiveApps(self):
         self.findActiveApps()
         return self.active_apps, self.c_active
